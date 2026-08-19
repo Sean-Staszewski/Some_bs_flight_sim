@@ -1,0 +1,7 @@
+{
+    "type": "radar_decoy",
+    "bloom_time_s": 2,
+    "effective_duration_s": 10,
+    "rcs_m2": 10,
+    "deploy_interval_s": 0.5
+}

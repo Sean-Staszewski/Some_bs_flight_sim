@@ -1,0 +1,6 @@
+{
+    "bands": ["UHF", "VHF"],
+    "datalink": "Link16",
+    "range_km": 300,
+    "encrypted": true
+}

@@ -1,0 +1,9 @@
+{
+    "armaments": [
+        {"type": "AIM_120", "count": 4}
+    ],
+    "countermeasures": [
+        {"type": "Flare", "count": 60},
+        {"type": "Chaff", "count": 30}
+    ]
+}

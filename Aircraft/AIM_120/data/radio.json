@@ -1,0 +1,6 @@
+{
+    "bands": ["X"],
+    "datalink": "midcourse_update",
+    "range_km": 100,
+    "encrypted": true
+}

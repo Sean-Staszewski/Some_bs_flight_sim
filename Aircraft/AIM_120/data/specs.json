@@ -1,0 +1,8 @@
+{
+    "category": "air_to_air_missile",
+    "guidance": "active_radar",
+    "max_range_km": 90,
+    "speed_mach": 4,
+    "mass_kg": 152,
+    "warhead_kg": 18
+}

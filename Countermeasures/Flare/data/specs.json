@@ -1,0 +1,6 @@
+{
+    "type": "infrared_decoy",
+    "burn_time_s": 5,
+    "peak_intensity_w_sr": 25000,
+    "deploy_interval_s": 0.5
+}

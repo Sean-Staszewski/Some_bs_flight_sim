@@ -1,0 +1,4 @@
+throttle_percent,thrust_kn,fuel_flow_kg_s
+0,0,0.05
+50,45,0.6
+100,76,1.1

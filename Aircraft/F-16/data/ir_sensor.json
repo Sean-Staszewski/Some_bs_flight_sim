@@ -1,0 +1,12 @@
+{
+    "primary": {
+        "max_range_km": 50,
+        "field_of_view_deg": {"azimuth": 90, "elevation": 30},
+        "track_capacity": 4
+    },
+    "early_warning": {
+        "max_range_km": 20,
+        "field_of_view_deg": {"azimuth": 360, "elevation": 30},
+        "track_capacity": 8
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "max_range_km": 150,
+    "field_of_regard_deg": {"azimuth": 120, "elevation": 60},
+    "frequency_band": "X",
+    "track_capacity": 20,
+    "has_look_down": true
+}
