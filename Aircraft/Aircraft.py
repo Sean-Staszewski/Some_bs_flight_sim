@@ -1,28 +1,13 @@
 import csv
+import inspect
 import json
-from dataclasses import dataclass
 from pathlib import Path
 
+from aircraft_cpp import CppAircraft
 from Armaments.Armament import Armament, load_armament_type
 from Countermeasures.Countermeasure import Countermeasure, load_countermeasure_type
 
 DATA_ROOT = Path(__file__).resolve().parent
-
-
-@dataclass
-class SectorVolume:
-    name: str
-    center_azimuth_deg: float
-    azimuth_width_deg: float
-    center_elevation_deg: float
-    elevation_width_deg: float
-    range_km: float
-
-    def contains(self, bearing_deg, elevation_deg, range_km=None):
-        az_ok = _within_sector(bearing_deg - self.center_azimuth_deg, self.azimuth_width_deg)
-        el_ok = _within_sector(elevation_deg - self.center_elevation_deg, self.elevation_width_deg)
-        range_ok = range_km is None or range_km <= self.range_km
-        return az_ok and el_ok and range_ok
 
 
 class Aircraft:
@@ -30,7 +15,7 @@ class Aircraft:
 
         self.name = name
         self.manufacturer = manufacturer
-        self.path = DATA_ROOT / name
+        self.path = Path(inspect.getfile(type(self))).resolve().parent
         self.data_path = self.path / "data"
 
         self.radar = self._load_json("radar.json")
@@ -38,13 +23,42 @@ class Aircraft:
         self.radio = self._load_json("radio.json")
 
         self.rcs_signature = self._load_table_csv(self.data_path / "rcs_signature.csv")
-        self.ir_signature = self._load_table_csv(self.data_path / "ir_signature.csv")
+        self.ir_signature_tables = self._load_table_dir("ir_signature")
 
         self.fuel_tables = self._load_table_dir("fuel")
         self.temperature_tables = self._load_table_dir("temperature")
+        self.temperatures_c = {}  # mirrors the C++ backend's state, for external inspection
 
         self.armaments: dict[Armament, int] = self._load_loadout("armaments", load_armament_type)
         self.countermeasures: dict[Countermeasure, int] = self._load_loadout("countermeasures", load_countermeasure_type)
+
+        # Temperature dynamics and sensing math (interpolation, sector containment,
+        # aspect matching, Stefan-Boltzmann scaling, range falloff) all live in C++ now
+        # for speed -- see Aircraft/capi.h and aircraft_cpp.py. Python still owns all the
+        # file I/O above; this just mirrors the parsed data into the C++ backend.
+        self._cpp = self._create_cpp_backend()
+        self._sync_cpp_backend()
+
+    def _create_cpp_backend(self):
+        """Every concrete aircraft type must override this to return its matching
+        aircraft_cpp.CppAircraft (e.g. CppAircraft.f16()) -- see F16.py/Aim120.py."""
+        raise NotImplementedError(f"{type(self).__name__} has no C++ backend wired up (see aircraft_cpp.py)")
+
+    def _sync_cpp_backend(self):
+        fov = self.radar["field_of_regard_deg"]
+        self._cpp.set_radar_config(self.radar["max_range_km"], fov["azimuth"], fov["elevation"])
+
+        for sensor_name, cfg in self.ir_sensor.items():
+            ir_fov = cfg["field_of_view_deg"]
+            self._cpp.set_ir_sensor_config(sensor_name, cfg["max_range_km"], ir_fov["azimuth"], ir_fov["elevation"])
+
+        for table_name, rows in self.temperature_tables.items():
+            x_key = next(k for k in rows[0] if k != "temp_c")
+            self._cpp.set_temperature_table(table_name, rows, x_key)
+
+        self._cpp.set_rcs_signature(self.rcs_signature)
+        for component_name, rows in self.ir_signature_tables.items():
+            self._cpp.set_ir_signature_component(component_name, rows)
 
     def _load_json(self, filename):
         with open(self.data_path / filename) as f:
@@ -78,32 +92,47 @@ class Aircraft:
             for entry in loadout.get(key, [])
         }
 
-    def radar_coverage(self, t):
-        """Default: static sector centered on the nose. Override per type for sweeping/scanning radars."""
-        fov = self.radar["field_of_regard_deg"]
-        return [self._static_sector("primary", self.radar["max_range_km"], fov)]
+    def update_temperature(self, table_name, x_value, dt, time_constant_s=10.0):
+        """Drifts this component's temperature toward data/temperature/<table_name>.csv's
+        interpolated target at x_value (e.g. update_temperature("engine_core", 80, dt)),
+        via the C++ backend's exact exponential heating/cooling curve. Returns (and mirrors
+        into self.temperatures_c) the new current temperature.
+        """
+        current_c = self._cpp.update_temperature(table_name, x_value, dt, time_constant_s)
+        self.temperatures_c[table_name] = current_c
+        return current_c
 
-    def ir_coverage(self, t):
-        """Default: one static sector per named sub-sensor in ir_sensor.json (e.g. primary, early_warning)."""
-        return [
-            self._static_sector(name, cfg["max_range_km"], cfg["field_of_view_deg"])
-            for name, cfg in self.ir_sensor.items()
-        ]
+    def radar_detect(self, t, sensor_position, sensor_orientation,
+                      target, target_position, target_orientation):
+        """Radar detection against `target` (another Aircraft/Missile). position is global
+        XYZ in meters; orientation is a (w, x, y, z) quaternion, local -> world, same
+        convention as the C++ physics code. See Aircraft::radarDetect in Aircraft.cpp for
+        the full rationale (bounding-box-first, then nearest-aspect RCS lookup).
+        """
+        return self._cpp.radar_detect(t, sensor_position, sensor_orientation,
+                                       target._cpp, target_position, target_orientation)
 
-    def _static_sector(self, name, range_km, fov):
-        return SectorVolume(
-            name=name,
-            center_azimuth_deg=0.0,
-            azimuth_width_deg=fov["azimuth"],
-            center_elevation_deg=0.0,
-            elevation_width_deg=fov["elevation"],
-            range_km=range_km,
-        )
+    def ir_detect(self, t, sensor_position, sensor_orientation,
+                  target, target_position, target_orientation):
+        """IR detection against `target`. See Aircraft::irDetect in Aircraft.cpp for the
+        full rationale (bounding-box-first, then per-component nearest-aspect lookup summed
+        and Stefan-Boltzmann-scaled by that component's current temperature).
+        """
+        return self._cpp.ir_detect(t, sensor_position, sensor_orientation,
+                                    target._cpp, target_position, target_orientation)
 
-
-def _within_sector(bearing_deg, width_deg):
-    bearing_deg = (bearing_deg + 180) % 360 - 180
-    return abs(bearing_deg) <= width_deg / 2
+    def perceive(self, signature, fields, sensor_strength=1.0, falloff_exponent=2.0):
+        """Turns a raw signature (radar_detect's or ir_detect's return value, which
+        includes "range_km") into what this aircraft's own sensor actually picks up:
+        range dropoff combined with this sensor's own strength/sensitivity multiplier,
+        via the C++ backend. falloff_exponent=4 for radar (round-trip radar equation),
+        =2 (the default) for IR (one-way, inverse-square).
+        """
+        range_km = signature["range_km"]
+        return {
+            field: CppAircraft.perceive(signature[field], range_km, sensor_strength, falloff_exponent)
+            for field in fields
+        }
 
 
 def _try_float(value):

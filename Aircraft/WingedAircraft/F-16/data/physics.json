@@ -1,0 +1,10 @@
+{
+    "empty_mass_kg": 9207,
+    "max_takeoff_mass_kg": 19187,
+    "wing_area_m2": 27.87,
+    "drag_coefficient": 0.0175,
+    "max_lift_coefficient": 1.2,
+    "max_speed_mps": 600,
+    "service_ceiling_m": 15240,
+    "max_load_factor_g": 9.0
+}
