@@ -1,5 +1,5 @@
 #include "Sensor.h"
-#include <map>
+#include <unordered_map>
 #include <fstream>
 #include <sstream>
 
@@ -26,7 +26,7 @@ void Sensor::sweep(float dt) {
 // Loads a signature CSV shaped like "x,y,z,<value columns...>" and returns the row
 // whose (x,y,z) direction is closest (max dot product) to `direction`. Every row in
 // these files is already a unit vector, so no normalization is needed on that side.
-map<string, float> nearestSignatureRow(const std::string& csvPath, const glm::vec3& direction) {
+unordered_map<string, float> nearestSignatureRow(const std::string& csvPath, const glm::vec3& direction) {
     std::ifstream file(csvPath);
     if (!file.is_open()) {
         return {};
@@ -77,10 +77,10 @@ map<string, float> nearestSignatureRow(const std::string& csvPath, const glm::ve
 // a sphere; anything narrower is a cone whose cross-section at any range is an oval
 // sized by horizontalFOV/verticalFOV -- not a box formed by independently checking
 // azimuth and elevation bands (that's what SectorVolume::contains in Sensing.h does).
-map<Aircraft, map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV, 
+unordered_map<Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
             float verticalFOV, float range, string type, vector<Aircraft> aircrafts)
 {
-    map<Aircraft, map<string, float>> sensed;
+    unordered_map<Aircraft, unordered_map<string, float>> sensed;
     
     for (const Aircraft& aircraft : aircrafts) {
 
@@ -141,7 +141,7 @@ map<Aircraft, map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orienta
     return sensed;
 }
 
-map<string, float> getSignature(glm::vec3 direction, string type, const Aircraft& aircraft) {
+unordered_map<string, float> getSignature(glm::vec3 direction, string type, const Aircraft& aircraft) {
 
     if (type == "radar") {
         string path = aircraft.path + "/data/radar_signature/sig.csv";

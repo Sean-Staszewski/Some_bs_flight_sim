@@ -1,0 +1,1 @@
+class F_16 : public WingedAircraft {
