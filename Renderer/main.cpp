@@ -17,6 +17,7 @@
 #include "controls.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "Camera.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -30,21 +31,13 @@ const unsigned int SCR_HEIGHT = 600;
 bool g_dragging = false;
 
 // Camera state
-glm::vec3 g_camPos          = glm::vec3(0.0f, 1.0f, 10.0f);
-float     g_yaw             = -90.0f;   // start facing -Z
-float     g_pitch           =   0.0f;
-float     MOVE_SPEED        = 15.0f;     // units per second
-float     MOUSE_SENSITIVITY = 0.25f;
-
-glm::vec3 g_front = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 g_right = glm::vec3(1.0f, 0.0f,  0.0f);
-glm::vec3 g_up    = glm::vec3(0.0f, 1.0f,  0.0f);
+Camera camera(glm::vec3(0.0f, 1.0f, 10.0f), -90.0f, 0.0f, 15.0f, 0.25f, 
+                glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), 
+                glm::vec3(0.0f, 1.0f, 0.0f), 45.0f);
 
 float g_deltaTime = 0.0f;
 float g_lastFrame = 0.0f;
-float g_fov       = 45.0f;
 
-bool g_printDepthBuffer = false;
 
 // Selected object index (-1 = none, 0 = first, 1 = second)
 int main(int argc, char* argv[])
@@ -132,17 +125,18 @@ int main(int argc, char* argv[])
             fpsFrames  = 0;
         }
 
-        g_front.x = cos(glm::radians(g_yaw)) * cos(glm::radians(g_pitch));
-        g_front.y = sin(glm::radians(g_pitch));
-        g_front.z = sin(glm::radians(g_yaw)) * cos(glm::radians(g_pitch));
-        g_front   = glm::normalize(g_front);
-        g_right   = glm::normalize(glm::cross(g_front, glm::vec3(0.0f, 1.0f, 0.0f)));
-        g_up      = glm::normalize(glm::cross(g_right, g_front));
+        camera.g_front.x = cos(glm::radians(camera.g_yaw)) * cos(glm::radians(camera.g_pitch));
+        camera.g_front.y = sin(glm::radians(camera.g_pitch));
+        camera.g_front.z = sin(glm::radians(camera.g_yaw)) * cos(glm::radians(camera.g_pitch));
+        camera.g_front   = glm::normalize(camera.g_front);
+        camera.g_right   = glm::normalize(glm::cross(camera.g_front, glm::vec3(0.0f, 1.0f, 0.0f)));
+        camera.g_up      = glm::normalize(glm::cross(camera.g_right, camera.g_front));
 
         processInput(window, g_scene.objects);
 
-        glm::mat4 proj = glm::perspective(glm::radians(g_fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 50.0f);
-        glm::mat4 view = glm::lookAt(g_camPos, g_camPos + g_front, g_up);
+
+        glm::mat4 proj = glm::perspective(glm::radians(camera.g_fovd), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 50.0f);
+        glm::mat4 view = glm::lookAt(camera.g_camPos, camera.g_camPos + camera.g_front, camera.g_up);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -162,7 +156,7 @@ int main(int argc, char* argv[])
             } else {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                 glUniform3f(glGetUniformLocation(shaderProgram, "uLightPos"), 2.0f, 3.0f, 2.0f);
-                glUniform3fv(glGetUniformLocation(shaderProgram, "uViewPos"), 1, glm::value_ptr(g_camPos));
+                glUniform3fv(glGetUniformLocation(shaderProgram, "uViewPos"), 1, glm::value_ptr(camera.g_camPos));
                 glUniform3f(glGetUniformLocation(shaderProgram, "uLightColor"), 1.0f, 1.0f, 1.0f);
                 glUniform1f(glGetUniformLocation(shaderProgram, "uAmbientStrength"), 0.15f);
                 glUniform1f(glGetUniformLocation(shaderProgram, "uSpecularStrength"), 0.5f);

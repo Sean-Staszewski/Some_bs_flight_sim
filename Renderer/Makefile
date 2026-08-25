@@ -9,9 +9,10 @@ LIBS     = -lGL -lGLEW -lglfw
 # Otherwise: CXXFLAGS += -I/path/to/glm
 
 TARGET   = demo
-SRC      = main.cpp glutils.cpp controls.cpp scene_types.cpp \
+SRC      = main.cpp glutils.cpp controls.cpp scene_types.cpp Camera.cpp\
            ../Aircraft/WingedAircraft/WingedAircraft.cpp \
            ../Aircraft/WingedAircraft/F-16/F_16.cpp
+
 
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(LIBS)

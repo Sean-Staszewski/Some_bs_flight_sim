@@ -9,9 +9,18 @@ CXXFLAGS = -std=c++17 -Wall -I../third_party/glm
 
 TESTS = radar_detection_test
 
+TEST_3D      = ../Renderer/main.cpp ../Renderer/glutils.cpp ../Renderer/controls.cpp ../Renderer/scene_types.cpp \
+           ../Aircraft/WingedAircraft/WingedAircraft.cpp \
+           ../Aircraft/WingedAircraft/F-16/F_16.cpp
+		   radar_detection_test_3D.cpp
+
+
 all: $(TESTS)
 
 radar_detection_test: radar_detection_test.cpp ../Aircraft/Sensor.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+radar_detection_test_with_rendering: ../Aircraft/Sensor.cpp $(TEST_3D)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 run: $(TESTS)

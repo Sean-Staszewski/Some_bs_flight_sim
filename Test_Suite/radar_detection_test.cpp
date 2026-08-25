@@ -67,3 +67,4 @@ TEST_CASE("non-positive range yields no detections", "[radar]") {
     auto result = sense(kSensorPos, kSensorOrientation, 60.0f, 60.0f, 0.0f, "radar", targets);
     REQUIRE(result.empty());
 }
+

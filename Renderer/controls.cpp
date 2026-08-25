@@ -1,42 +1,37 @@
 #include "controls.h"
+#include "Camera.h"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
 // Globals defined in main.cpp
-extern glm::vec3   g_camPos;
-extern float       g_yaw;
-extern float       g_pitch;
-extern float       MOVE_SPEED;
-extern float       MOUSE_SENSITIVITY;
-
-extern glm::vec3 g_front;
-extern glm::vec3 g_right;
-extern glm::vec3 g_up;
+extern Camera camera;
 
 extern float g_deltaTime;
-extern float g_fov;
-extern bool  g_dragging;
+extern bool g_dragging;
+
+
+
 
 void processInput(GLFWwindow *window, std::vector<ObjInstance>& /*objInstances*/)
 {
-    float speed = MOVE_SPEED * g_deltaTime;
+    float speed = camera.MOVE_SPEED * g_deltaTime;
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) g_camPos += speed * g_front;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) g_camPos -= speed * g_front;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) g_camPos -= speed * g_right;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) g_camPos += speed * g_right;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.g_camPos += speed * camera.g_front;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.g_camPos -= speed * camera.g_front;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera.g_camPos -= speed * camera.g_right;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera.g_camPos += speed * camera.g_right;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        g_camPos += speed * g_up;
+        camera.g_camPos += speed * camera.g_up;
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
-        g_camPos -= speed * g_up;
+        camera.g_camPos -= speed * camera.g_up;
 }
 
 void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
 {
-    g_fov -= (float)yoffset * 2.0f;
-    if (g_fov < 1.0f) g_fov = 1.0f;
-    if (g_fov > 90.0f) g_fov = 90.0f;
+    camera.g_fovd -= (float)yoffset * 2.0f;
+    if (camera.g_fovd < 1.0f) camera.g_fovd = 1.0f;
+    if (camera.g_fovd > 90.0f) camera.g_fovd = 90.0f;
 }
 
 void mouse_button_callback(GLFWwindow* /*window*/, int button, int action, int /*mods*/)
@@ -63,9 +58,9 @@ void mouse_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 
     if (!g_dragging) return;
 
-    g_yaw   += (float)dx * MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera
-    g_pitch -= (float)dy * MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera
+    camera.g_yaw   += (float)dx * camera.MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera
+    camera.g_pitch -= (float)dy * camera.MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera
 
-    if (g_pitch >  89.0f) g_pitch =  89.0f;
-    if (g_pitch < -89.0f) g_pitch = -89.0f;
+    if (camera.g_pitch >  89.0f) camera.g_pitch =  89.0f;
+    if (camera.g_pitch < -89.0f) camera.g_pitch = -89.0f;
 }

@@ -78,10 +78,10 @@ unordered_map<string, float> nearestSignatureRow(const std::string& csvPath, con
 // a sphere; anything narrower is a cone whose cross-section at any range is an oval
 // sized by horizontalFOV/verticalFOV -- not a box formed by independently checking
 // azimuth and elevation bands (that's what SectorVolume::contains in Sensing.h does).
-unordered_map<const Aircraft*, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
+unordered_map<const Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
             float verticalFOV, float range, string type, const vector<Aircraft>& aircrafts)
 {
-    unordered_map<const Aircraft*, unordered_map<string, float>> sensed;
+    unordered_map<const Aircraft, unordered_map<string, float>> sensed;
 
     if (range <= 0.0f) {
         return {}; // Invalid range

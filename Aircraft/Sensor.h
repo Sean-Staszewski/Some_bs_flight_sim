@@ -10,6 +10,7 @@ class Aircraft;
 using namespace std;
 
 class Sensor {
+    public:
     // Sensor properties and methods would be defined here
     string type;
 
@@ -29,7 +30,7 @@ class Sensor {
     void sweep(float dt); // Update the sensor's sweep based on time delta
 };
 
-unordered_map<const Aircraft*, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
+unordered_map<const Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
             float verticalFOV, float range, string type, const vector<Aircraft>& aircrafts);
 
 unordered_map<string, float> getSignature(glm::vec3 direction, string type, const Aircraft& aircraft);
