@@ -1,4 +1,5 @@
 #include "Sensor.h"
+#include "Physics.h"
 #include <vector>
 #include "../Renderer/scene_types.h"
 
@@ -7,9 +8,10 @@ using namespace std;
 
 
 class Aircraft {
+public:
 
     ObjInstance objInstance; // ObjInstance representing the aircraft
-    Sensor vector<Sensor> sensors; // sensor array/vector
+    vector<Sensor> sensors; // sensor array/vector
     Physics physics; // struct for physics state
 
     string name;
@@ -20,7 +22,7 @@ class Aircraft {
     }
 
     glm::mat4 getLocalRotation() {
-        return physics.orientation; // Assuming orientation is stored as a quaternion
+        return glm::mat4_cast(physics.orientation); // orientation is stored as a quaternion
     }
 
     glm::vec3 getVelocity() {
@@ -29,7 +31,7 @@ class Aircraft {
     }
 
     void setLocalRotation(glm::mat4 rotation) {
-        physics.orientation = rotation;
+        physics.orientation = glm::quat_cast(rotation);
     }
 
     void setPosition(glm::vec3 newPos) {
@@ -38,7 +40,7 @@ class Aircraft {
 
     void passToRenderer() {
         objInstance.position = physics.position;
-        objInstance.localRotation = physics.orientation; // Assuming orientation is stored as a quaternion
+        objInstance.localRotation = glm::mat4_cast(physics.orientation); // orientation is stored as a quaternion
     }
 
     void applyPhysics(float dt) {

@@ -26,11 +26,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 const unsigned int SCR_WIDTH  = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// left click held flag
-bool g_mouselocked = false;
+// left mouse button held -- gates camera-look dragging
+bool g_dragging = false;
 
 // Camera state
-glm::vec3 g_camPos          = glm::vec3(5.0f, 0.0f, 10.0f);
+glm::vec3 g_camPos          = glm::vec3(0.0f, 1.0f, 10.0f);
 float     g_yaw             = -90.0f;   // start facing -Z
 float     g_pitch           =   0.0f;
 float     MOVE_SPEED        = 15.0f;     // units per second

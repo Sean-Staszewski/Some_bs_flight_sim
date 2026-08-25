@@ -14,8 +14,8 @@ extern glm::vec3 g_right;
 extern glm::vec3 g_up;
 
 extern float g_deltaTime;
-extern bool g_mouselocked;
 extern float g_fov;
+extern bool  g_dragging;
 
 void processInput(GLFWwindow *window, std::vector<ObjInstance>& /*objInstances*/)
 {
@@ -39,15 +39,13 @@ void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
     if (g_fov > 90.0f) g_fov = 90.0f;
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int /*mods*/)
+void mouse_button_callback(GLFWwindow* /*window*/, int button, int action, int /*mods*/)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
-            g_mouselocked = true;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            g_dragging = true;
         } else if (action == GLFW_RELEASE) {
-            g_mouselocked = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            g_dragging = false;
         }
     }
 }
@@ -62,6 +60,8 @@ void mouse_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 
     lastX = xpos;
     lastY = ypos;
+
+    if (!g_dragging) return;
 
     g_yaw   += (float)dx * MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera
     g_pitch -= (float)dy * MOUSE_SENSITIVITY; // divide by 10 to make mouse movement less twitchy for camera

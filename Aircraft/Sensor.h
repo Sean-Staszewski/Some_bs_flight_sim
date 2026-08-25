@@ -1,9 +1,11 @@
 #pragma once
-#include "Aircraft.h"
 #include <cmath>
 #include <glm/glm.hpp>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+class Aircraft;
 
 using namespace std;
 
