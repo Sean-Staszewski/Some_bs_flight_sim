@@ -10,10 +10,6 @@ struct WorldAABB {
 };
 
 
-void ObjInstance::selfTexture() {
-    // No self-generated texture by default.
-}
-
 Scene g_scene;
 
 F_16 f16(glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f));

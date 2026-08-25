@@ -40,8 +40,10 @@ struct ObjInstance {
     std::string texturePath;
     std::string shaderPath = "shaders/phong.fs";
 
-    // Virtual method for objects that generate their own texture
-    virtual void selfTexture();
+    // Virtual method for objects that generate their own texture. Defined inline (empty
+    // default) so any translation unit that instantiates ObjInstance can emit its vtable --
+    // otherwise only whichever .cpp provided an out-of-line definition could link it in.
+    virtual void selfTexture() {}
 
 };
 

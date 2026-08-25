@@ -1,4 +1,5 @@
 #include "Sensor.h"
+#include "Aircraft.h"
 #include <unordered_map>
 #include <fstream>
 #include <sstream>
@@ -77,32 +78,33 @@ unordered_map<string, float> nearestSignatureRow(const std::string& csvPath, con
 // a sphere; anything narrower is a cone whose cross-section at any range is an oval
 // sized by horizontalFOV/verticalFOV -- not a box formed by independently checking
 // azimuth and elevation bands (that's what SectorVolume::contains in Sensing.h does).
-unordered_map<Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
-            float verticalFOV, float range, string type, vector<Aircraft> aircrafts)
+unordered_map<const Aircraft*, unordered_map<string, float>> sense(const glm::vec3& pos1, glm::mat4 orientation, float horizontalFOV,
+            float verticalFOV, float range, string type, const vector<Aircraft>& aircrafts)
 {
-    unordered_map<Aircraft, unordered_map<string, float>> sensed;
-    
+    unordered_map<const Aircraft*, unordered_map<string, float>> sensed;
+
+    if (range <= 0.0f) {
+        return {}; // Invalid range
+    }
+
+    if (horizontalFOV <= 0.0f || verticalFOV <= 0.0f) {
+        return {}; // Invalid FOV
+    }
+
     for (const Aircraft& aircraft : aircrafts) {
 
-        if (range <= 0.0f) {
-            return false; // Invalid range
-        }
-
-        if (horizontalFOV <= 0.0f || verticalFOV <= 0.0f) {
-            return false; // Invalid FOV
-        }
-
-        pos2 = aircraft.getPosition();
+        glm::vec3 pos2 = aircraft.getPosition();
 
         glm::vec3 delta = pos2 - pos1;
         float distanceSquared = glm::dot(delta, delta); // avoids the sqrt in glm::length
 
         if (distanceSquared > range * range) {
-            return false; // out of range
+            continue; // this aircraft is out of range -- others may still be in range
         }
 
         if (horizontalFOV >= 360.0f && verticalFOV >= 360.0f) {
-            sensed[aircraft] = getSignature(delta, type, aircraft); // full-sphere sensor
+            sensed[&aircraft] = getSignature(delta, type, aircraft); // full-sphere sensor
+            continue;
         }
 
         // Local axes: +X nose (boresight), +Y up, +Z right -- same convention as the rest
@@ -114,7 +116,7 @@ unordered_map<Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos
 
         float forward = glm::dot(delta, forwardAxis);
         if (forward <= 0.0f) {
-            return {}; // behind the sensor -- can't be inside a forward-facing cone
+            continue; // behind the sensor -- can't be inside a forward-facing cone, but other aircraft might still be visible
         }
 
         float horizontalOffset = glm::dot(delta, rightAxis);
@@ -134,7 +136,7 @@ unordered_map<Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos
         float ellipseValue = normalizedHorizontal * normalizedHorizontal + normalizedVertical * normalizedVertical;
 
         if (ellipseValue <= 1.0f) {
-            sensed[aircraft] = getSignature(delta, type, aircraft); // inside the cone
+            sensed[&aircraft] = getSignature(delta, type, aircraft); // inside the cone
         }
     }
     
@@ -143,10 +145,11 @@ unordered_map<Aircraft, unordered_map<string, float>> sense(const glm::vec3& pos
 
 unordered_map<string, float> getSignature(glm::vec3 direction, string type, const Aircraft& aircraft) {
 
+    string path;
     if (type == "radar") {
-        string path = aircraft.path + "/data/radar_signature/sig.csv";
+        path = aircraft.path + "/data/radar_signature/sig.csv";
     } else if (type == "infrared") {
-        string path = aircraft.path + "/data/ir_signature/sig.csv";
+        path = aircraft.path + "/data/ir_signature/sig.csv";
     } else {
         // Unknown sensor type
         return {};

@@ -1,3 +1,4 @@
+#pragma once
 #include "Sensor.h"
 #include "Physics.h"
 #include <vector>
@@ -14,18 +15,30 @@ public:
     vector<Sensor> sensors; // sensor array/vector
     Physics physics; // struct for physics state
 
+    float rollRate; // in degrees per second
+    float pitchRate; // in degrees per second
+    float yawRate; // in degrees per second
+
+    float maxRollRate; // in degrees per second
+    float maxPitchRate; // in degrees per second
+    float maxYawRate; // in degrees per second
+
+    float maxThrust; // in Newtons
+
     string name;
     string path;
 
-    glm::vec3 getPosition() {
+    
+
+    glm::vec3 getPosition() const {
         return physics.position;
     }
 
-    glm::mat4 getLocalRotation() {
+    glm::mat4 getLocalRotation() const {
         return glm::mat4_cast(physics.orientation); // orientation is stored as a quaternion
     }
 
-    glm::vec3 getVelocity() {
+    glm::vec3 getVelocity() const {
         // Placeholder for velocity calculation
         return physics.velocity; // Assume stationary for now
     }
@@ -44,6 +57,7 @@ public:
     }
 
     void applyPhysics(float dt) {
+
 
         physics.velocity += physics.acceleration * dt;
         physics.position += physics.velocity * dt;  
